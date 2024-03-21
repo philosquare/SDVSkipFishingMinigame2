@@ -10,7 +10,7 @@ using StardewValley.Menus;
 using StardewValley.Minigames;
 using StardewValley.Tools;
 
-namespace MyFirstMod
+namespace SkipFishingMinigame2
 {
     /// <summary>The mod entry point.</summary>
     internal sealed class ModEntry : Mod
@@ -23,6 +23,20 @@ namespace MyFirstMod
         public override void Entry(IModHelper helper)
         {
             helper.Events.Display.MenuChanged += this.Display_MenuChanged;
+            helper.Events.Display.Rendered += Display_AutoHook;
+        }
+
+        private void Display_AutoHook(object? sender, RenderedEventArgs e)
+        {
+            if (!(Game1.player.CurrentTool is FishingRod fishingRod) || !fishingRod.isNibbling ||
+                !fishingRod.isFishing || fishingRod.hit || fishingRod.isReeling)
+            {
+                return;
+            }
+            Farmer who = Game1.player;
+            fishingRod.timeUntilFishingBite = -1f;
+            fishingRod.DoFunction(who.currentLocation, (int)fishingRod.bobber.X, (int)fishingRod.bobber.Y, 1, who);
+            this.Monitor.Log($"{who.Name} fishingRod DoFunction fishingRod.bobber.X {fishingRod.bobber.X} fishingRod.bobber.Y {fishingRod.bobber.Y} ", LogLevel.Debug);
         }
 
         private void Display_MenuChanged(object sender, MenuChangedEventArgs e)
@@ -42,19 +56,23 @@ namespace MyFirstMod
             int perfections = ((!(Game1.currentMinigame is FishingGame)) ? (-1) : ((Mod)this).Helper.Reflection.GetField<int>((object)Game1.currentMinigame, "perfections", true).GetValue());
             string setFlagOnCatch = ((Mod)this).Helper.Reflection.GetField<string>((object)bobberBar, "setFlagOnCatch", true).GetValue();
             bool bossFish = ((Mod)this).Helper.Reflection.GetField<bool>((object)bobberBar, "bossFish", true).GetValue();
-            int num = ((Game1.player.CurrentTool == null || !(Game1.player.CurrentTool is FishingRod) || (Game1.player.CurrentTool as FishingRod).attachments[0] == null) ? (-1) : (Game1.player.CurrentTool as FishingRod).attachments[0].ParentSheetIndex);
-            bool caughtDouble = !bossFish && num == 774 && Game1.random.NextDouble() < 0.25 + Game1.player.DailyLuck / 2.0;
+            string baitId = fishingRod?.GetBait()?.QualifiedItemId;
+            int numCaught = ((bossFish || !(baitId == "(O)774") || !(Game1.random.NextDouble() < 0.25 + Game1.player.DailyLuck / 2.0)) ? 1 : 2);
+            if (baitId == "(O)ChallengeBait")
+            {
+                numCaught = 3;
+            }
             if (perfect && Game1.currentMinigame is FishingGame)
             {
                 Game1.CurrentEvent.perfectFishing();
             }
             this.Monitor.Log($"whichFish {whichFish} fishSize {fishSize} fishQuality {fishQuality} difficulty {difficulty} treasureCaught {treasureCaught} ", LogLevel.Debug);
-            this.Monitor.Log($"perfect {perfect} fromFishPond {fromFishPond} setFlagOnCatch {setFlagOnCatch} bossFish {bossFish} num {num} ", LogLevel.Debug);
+            this.Monitor.Log($"perfect {perfect} fromFishPond {fromFishPond} setFlagOnCatch {setFlagOnCatch} bossFish {bossFish} baitId {baitId} numCaught {numCaught}", LogLevel.Debug);
 
-            fishingRod.pullFishFromWater(whichFish, fishSize, fishQuality, (int)difficulty, treasureCaught, perfect, fromFishPond, "", bossFish, 1);
+            fishingRod.pullFishFromWater(whichFish, fishSize, fishQuality, (int)difficulty, treasureCaught, perfect, fromFishPond, setFlagOnCatch, bossFish, numCaught);
             Game1.exitActiveMenu();
             Game1.setRichPresence("location", Game1.currentLocation.Name);
-            
+
         }
 
     }
