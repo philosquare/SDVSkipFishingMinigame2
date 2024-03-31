@@ -15,6 +15,8 @@ namespace SkipFishingMinigame2
     /// <summary>The mod entry point.</summary>
     internal sealed class ModEntry : Mod
     {
+        private int oldTimeInterval = 0;
+
         /*********
         ** Public methods
         *********/
@@ -24,6 +26,17 @@ namespace SkipFishingMinigame2
         {
             helper.Events.Display.MenuChanged += this.Display_MenuChanged;
             helper.Events.Display.Rendered += Display_AutoHook;
+            helper.Events.GameLoop.UpdateTicked += GameLoop_PauseFishTime;
+        }
+
+        private void GameLoop_PauseFishTime(object? sender, UpdateTickedEventArgs e)
+        {
+            if (!(Game1.player.CurrentTool is FishingRod fishingRod) || !fishingRod.isFishing)
+            {
+                oldTimeInterval = Game1.gameTimeInterval;
+                return;
+            }
+            Game1.gameTimeInterval = oldTimeInterval;
         }
 
         private void Display_AutoHook(object? sender, RenderedEventArgs e)
