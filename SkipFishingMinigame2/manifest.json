@@ -2,9 +2,9 @@
   "Name": "SkipFishingMinigame2",
   "Author": "philosquare",
   "Version": "1.2.0",
-  "Description": "<One or two sentences about the mod>",
+  "Description": "Fishing skip minigame, auto hook, pause time",
   "UniqueID": "philosquare.SkipFishingMinigame2",
   "EntryDll": "SkipFishingMinigame2.dll",
   "MinimumApiVersion": "3.0.0",
-  "UpdateKeys": []
+  "UpdateKeys": [ "ModDrop:1530481" ]
 }
